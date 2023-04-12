@@ -26,7 +26,7 @@ for i, style in enumerate(styles_df['subCategory'].unique()):
 X = []
 y = []
 
-image_amount = 100  # @param {type:"slider", min:1, max:10000, step:1}
+image_amount = 200  # @param {type:"slider", min:1, max:10000, step:1}
 time_limit = 5  # @param {type:"integer"}
 
 # @markdown Time limit is in minutes
@@ -77,7 +77,7 @@ X = np.array(X)
 y = np.array(y)
 
 # Split the data into training and validation sets
-X_train, X_val, y_train, y_val = train_test_split(X, y, test_size=0.33)
+X_train, X_val, y_train, y_val = train_test_split(X, y, test_size=0.5)
 
 # Normalize the pixel values
 X_train = X_train / 255.0
@@ -109,9 +109,8 @@ model = Sequential([
 # Compile the model
 model.compile(optimizer='adam', loss='sparse_categorical_crossentropy', metrics=['accuracy'])
 
-
 # Fit Model & Predict
-model.fit(X_train, y_train, epochs=20)
+model.fit(X_train, y_train, epochs=7)
 predictions = model(X_train).numpy()
 
 
@@ -146,21 +145,6 @@ def plot_image(i, predictions_array, true_label, img):
 	plt.xlabel("{} {:2.0f}% ({})".format(predicted_label, 100 * np.max(predictions_array), true_label), color=color)
 
 
-"""
-def plot_value_array(i, predictions_array, true_label):
-	true_label = true_label[i]
-	plt.grid(False)
-	plt.xticks(range(predictions_array.shape[0]))
-	plt.yticks([])
-	thisplot = plt.bar(range(predictions_array.shape[0]), predictions_array, color="#777777")
-	plt.ylim([0, 1])
-	predicted_label = np.argmax(predictions_array)
-
-	thisplot[predicted_label].set_color('red')
-	thisplot[true_label].set_color('blue')
-"""
-
-
 def plot_value_array(i, predictions_array, true_label, top_n=3):
 	# Get the top_n predicted labels and their corresponding probabilities
 	sorted_idxs = np.argsort(predictions_array)[::-1]
@@ -184,20 +168,21 @@ def plot_value_array(i, predictions_array, true_label, top_n=3):
 			thisplot[j].set_color('blue')
 
 
-def plot_predictions(i, predictions_array, true_label, top_n=3, position=()):
+def plot_predictions(i, predictions_array, true_label, top_n=3):
 	sorted_idxs = np.argsort(predictions_array)[::-1]
 	top_n_idxs = sorted_idxs[:top_n]
 	top_n_probs = predictions_array[top_n_idxs]
 	true_label = true_label[i]
 
-	plt.grid(False)
-	plt.xticks([])
-	plt.yticks([])
-
 	# Show the top_n predicted labels and their probabilities
 	for j in range(top_n):
 		label = f"{r_style_map[top_n_idxs[j]]} ({100 * top_n_probs[j]:.2f}%)"
-		plt.figtext(i % position[0], position[1], label, fontsize=12, color='blue' if top_n_idxs[j] == true_label else 'red')
+		plt.text(1, j, label, fontsize=6, color='blue' if top_n_idxs[j] == true_label else 'red', ha='center', va='center')
+
+	plt.xticks([])
+	plt.yticks(range(top_n))
+	plt.xlim([-0.5, top_n - 0.5])
+	plt.ylim([-1, top_n])
 
 
 # predictions = normalize(predictions)
@@ -213,6 +198,6 @@ for i in range(num_images):
 	plt.subplot(num_rows, 2 * num_cols, 2 * i + 1)
 	plot_image(i, predictions[i], y_val, X_val)
 	plt.subplot(num_rows, 2 * num_cols, 2 * i + 2)
-	plot_predictions(i, predictions[i], y_val, position=(num_rows, num_cols))
+	plot_predictions(i, predictions[i], y_val)
 plt.tight_layout()
 plt.show()
